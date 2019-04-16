@@ -49,6 +49,7 @@
 // Define common types and API calls, mapping to both Ruby and MRuby APIs
 #if MRUBY
   // MRuby
+  #define R_ID  mrb_sym
   #define R_VAL  mrb_value
   #define R_NIL  (mrb_nil_value())
   #define R_TRUE  (mrb_true_value())
@@ -70,8 +71,11 @@
   #define r_args_req(n)  MRB_ARGS_REQ(n)
   // Helpers
   #define r_char_to_sym(str)  mrb_symbol_value(mrb_intern_cstr(mrb, str))
+  #define r_char_to_id(str)  mrb_intern_cstr(mrb, str)  // C string to Ruby ID
+  #define r_sym_to_id(sym)  mrb_symbol(sym)  // Ruby symbol to ID
 #else
   // Ruby
+  #define R_ID  ID
   #define R_VAL  VALUE
   #define R_NIL  Qnil
   #define R_TRUE  Qtrue
@@ -93,6 +97,8 @@
   #define r_args_req(n)  n
   // Helpers
   #define r_char_to_sym(str)  ID2SYM(rb_intern(str))
+  #define r_char_to_id(str)  rb_intern(str)  // C string to Ruby ID
+  #define r_sym_to_id(sym)  SYM2ID(sym)  // Ruby symbol to ID
 #endif
 
 // Create the MRuby context
@@ -362,6 +368,18 @@ static R_VAL ruby2d_image_ext_render(R_VAL self) {
   img->x = NUM2DBL(r_iv_get(self, "@x"));
   img->y = NUM2DBL(r_iv_get(self, "@y"));
 
+  R_ID anchor = r_sym_to_id(r_iv_get(self, "@anchor"));
+  R_ID center = r_char_to_id("center");
+  R_ID top_left = r_char_to_id("top_left");
+  printf("anchor: %u\n", anchor);
+  printf("center: %u\n", center);
+  printf("top_left: %u\n", top_left);
+
+  if (anchor == center) {
+    img->x = img->x - (img->width / 2.0);
+    img->y = img->y - (img->height / 2.0);
+  }
+
   R_VAL w = r_iv_get(self, "@width");
   R_VAL h = r_iv_get(self, "@height");
   if (r_test(w)) img->width  = NUM2INT(w);
@@ -376,6 +394,9 @@ static R_VAL ruby2d_image_ext_render(R_VAL self) {
   img->color.a = NUM2DBL(r_iv_get(c, "@a"));
 
   S2D_DrawImage(img);
+
+  img->x = img->x + (img->width / 2.0);
+  img->y = img->y + (img->height / 2.0);
 
   return R_NIL;
 }

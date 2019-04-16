@@ -18,6 +18,7 @@ module Ruby2D
       @width = opts[:width] || nil
       @height = opts[:height] || nil
       @rotate = opts[:rotate] || 0
+      @anchor = opts[:anchor] || :top_left
       self.color = opts[:color] || 'white'
       self.opacity = opts[:opacity] if opts[:opacity]
       unless ext_init(@path)
